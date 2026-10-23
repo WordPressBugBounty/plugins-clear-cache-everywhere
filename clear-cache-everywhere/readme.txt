@@ -4,7 +4,7 @@ Tags: cache, clear cache, flush cache, performance, admin bar
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.4
+Stable tag: 1.2.5.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
 
@@ -18,10 +18,11 @@ Clear all cache sources in one click from the WordPress admin bar, including WP 
 
 - **One-Click Cache Clearing:** Clears multiple cache layers across WordPress, server, and browser.
 - **Individual Clear Actions:** Run specific cache clearing actions independently.
+- **Status at a Glance:** Every action shows when it last ran and whether it succeeded, so you can see what was skipped or failed.
 - **Admin Bar Access:** Quick purge button in the WordPress admin bar (eraser icon).
 - **Hosting Integration:** Supports clearing hosting-level cache via configurable purge URL.
 - **Third-Party Support:** Clears cache for supported plugins and services.
-- **Detailed Logging:** Logs execution time for each action.
+- **Detailed Logging:** A Logs tab records every failed clear with the HTTP status, PHP error, file and line, and server environment details. Successful clears can be logged too, with an automatic cleanup period.
 - **Developer Hooks:** Add additional cache clearing actions via developer hooks.
 
 The following clearing actions are available:
@@ -89,7 +90,6 @@ This plugin is ideal for developers, content managers, and site owners who need 
 It executes multiple cache-clearing actions across WordPress core, object caching systems, server-level caching, browser cache, and supported third-party plugins. Individual actions can be triggered independently.
 
 = Why does it take so long to clear the cache sometimes? =
-
 Clearing cache is not just a single action. When you click “Clear All,” the plugin may be flushing multiple cache layers: object cache, persistent cache (Redis/Memcached), OPcache, reverse proxies like Varnish, REST caches, transients, sessions, and third-party integrations. Each layer operates differently and may require disk I/O, memory resets, or network requests.
 
 On larger sites, clearing cache can take longer because:
@@ -127,19 +127,54 @@ https://pluginrx.com/docs/plugin/clear-cache-everywhere/
 = Is there a function to trigger clearing cache everywhere? =
 Yes! A helper function is available for you to use: `cceverywhere_clear_all( $log_results = false )`. 
 
-The function returns the results of the cache clearing processing. Optionally, you can log the results by setting the `$log_results` parameter to `true`. This will log the results to the debug log.
+The function returns the results of the cache clearing processing. Optionally, you can log the results by setting the `$log_results` parameter to `true`. This will log the results to the debug log. Results from this function also appear in the Logs tab, labeled "Helper Function."
+
+= Where can I see what failed? =
+Open the **Logs** tab in the plugin header. Failures are always logged with the action, where it was triggered from (settings page, admin bar, individual button, URL, cron, or helper function), the duration, and the error. HTTP errors such as a 500 include the response, and PHP fatals include the file and line.
+
+= Are successful clears logged? =
+Not by default. Turn on **Log Successful Clears** in the Logs settings at the bottom of the Settings tab if you want a full history. Logs are deleted automatically after the number of days set in **Clear Logs After (Days)**, which defaults to 30. You can also delete entries manually from the Logs tab.
+
+= What does Log Responses to the Browser Console do? =
+It prints each clearing request's response to your browser's developer console, which is useful for troubleshooting and verifying that everything has actually been cleared while on the front-end. It is on by default and can be turned off in the Logs settings.
 
 = Where can I request features and get further support? =
 We recommend using our [website support forum](https://pluginrx.com/support/plugin/clear-cache-everywhere/) as the primary method for requesting features and getting help. You can also reach out via our [Discord support server](https://discord.gg/3HnzNEJVnR) or the [WordPress.org support forum](https://wordpress.org/support/plugin/clear-cache-everywhere/), but please note that WordPress.org doesn’t always notify us of new posts, so it’s not ideal for time-sensitive issues.
 
 == Demo ==
-https://youtu.be/wjCEGl2sSzQ
+https://youtu.be/C5ySHT1jyjU
 
 == Screenshots ==
-
 1. Settings page and admin bar button.
 
 == Changelog ==
+= 1.2.5.2 =
+* Update: Added a "Delete All Data on Uninstall" option in a new Advanced panel. When enabled, deleting the plugin removes its settings, last results, logs table, and scheduled cleanup
+* Update: Added How-To Guide, Developer Docs, and Support buttons and the plugin version to the right side of the Settings subheader
+* Tweak: Moved the Clear All Cache Now button next to the Save button in the Settings subheader
+
+= 1.2.5.1 =
+* Fix: The browser console showed "undefined" after progress messages when logging responses to the console was on
+* Update: IP addresses are no longer stored in the logs. The column is removed from existing log tables automatically
+* Tweak: Log Successful Clears is now off by default. Failures are always logged
+* Tweak: Added Logs tab details to the readme description and FAQ
+
+= 1.2.5 =
+* Fix: Clear All no longer freezes when an action returns an HTTP error such as a 500. It now records the error and continues to the next action
+* Fix: WP Engine cache clearing failed with a "Class not found" error. The call to the global WpeCommon class is now fully qualified.
+* Fix: An action that saved a success but whose response then failed (for example, a 500 after flushing Redis/Memcached) is now recorded as a failure instead of showing as successful after the page reloads
+* Fix: Fatal errors that happen while an action runs, or in the hooks right after it, are now captured with the file and line
+* Fix: Clearing Fragment Cache and REST API Cache now deletes in batches and never touches this plugin's own options, which could cause timeouts and 500 errors on large sites
+* Fix: Unchecking a checkbox that is on by default now saves correctly
+* Update: Added a Logs tab with filters, search, bulk delete, and Clear All / Clear All Success buttons. Failures include the HTTP status, PHP error, and environment details (PHP, WordPress, memory limit, execution time)
+* Update: Added Logs settings: Clear Logs After (Days), Log Successful Clears, and Log Responses to the Browser Console
+* Update: Added Settings and Logs tabs to the header
+* Update: Setting descriptions moved to tooltips and fields restyled to match our other plugins
+* Update: Every action now shows a persistent status row ("Never ran." or the last result), and a spinner shows while an action is running or finalizing
+* Tweak: Renamed the button to Clear All Cache Now
+* Tweak: Added more spacing between the settings header and content, and between result rows and the next option
+* Tweak: Settings assets now load only on the Settings tab
+
 = 1.2.4 =
 * Update: Added Seraphinite Accelerator integration
 * Note: Seraphinite processes cache deletion in the background, so it may take up to a minute to take effect
